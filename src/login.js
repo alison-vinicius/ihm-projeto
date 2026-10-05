@@ -95,7 +95,7 @@ formulario.addEventListener("submit", function (evento) {
         if(email.value.trim() === "funcionario@gmail.com")
             window.location.href = "src/funcionario.html"
         else if(email.value.trim() == "solicitante@gmail.com")
-            window.location.href = "src/homeSolicitante.html";
+            window.location.href = "src/solicitar-galao.html";
 
     }
 

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solicitar galão</title>
+<style>
+:root{
+  --bg:#ebebeb; --surface:#fff; --text:#111; --muted:#555; --tab:#b9a3a3;
+  --field:#f4f4f4; --border:#777; --erro:#c62828; --cancel:#e5301f; --ok:#12804a; --okmsg:#0d6b3d;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#1c1c1e;--surface:#2a2a2d;--text:#f2f2f2;--muted:#b5b5b5;--tab:#7a5f5f;--field:#1f1f21;--border:#8a8a8a;--erro:#ff7b72;--okmsg:#5fd38d}
+}
+:root[data-theme="dark"]{--bg:#1c1c1e;--surface:#2a2a2d;--text:#f2f2f2;--muted:#b5b5b5;--tab:#7a5f5f;--field:#1f1f21;--border:#8a8a8a;--erro:#ff7b72;--okmsg:#5fd38d}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+header{background:var(--surface);box-shadow:0 2px 3px rgba(0,0,0,.25);padding:14px;display:flex;justify-content:center}
+.pill{background:var(--tab);color:var(--text);border-radius:999px;padding:10px 26px;font-size:1.1rem}
+main{max-width:560px;margin:0 auto;padding:40px 20px}
+form{display:flex;flex-direction:column;gap:22px}
+.campo{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;align-items:start}
+label{font-size:1.2rem;padding-top:6px}
+.obrig{color:var(--erro);margin-left:2px}
+input,textarea{width:100%;font:inherit;font-size:1.05rem;color:var(--text);background:var(--field);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+textarea{resize:vertical;min-height:84px}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #2f74e0;outline-offset:2px}
+[aria-invalid="true"]{border-color:var(--erro);border-width:2px}
+.msg{grid-column:2;margin:0;font-size:.9rem;min-height:1.2em;color:var(--muted)}
+.msg.erro{color:var(--erro)}
+.legenda{margin:0;font-size:.9rem;color:var(--muted)}
+.acoes{display:flex;justify-content:flex-end;gap:16px;margin-top:6px}
+button{border:0;border-radius:999px;font:inherit;font-size:1.2rem;color:#fff;padding:10px 30px;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+.cancelar{background:var(--cancel)} .enviar{background:var(--ok)}
+.sucesso{margin:0;text-align:center;color:var(--okmsg);font-weight:600;min-height:1.4em}
+@media (max-width:460px){.campo{grid-template-columns:1fr}.msg{grid-column:1}label{padding-top:0}}
+</style>
+</head>
+<body>
+<header><div class="pill">Solicitar galão</div></header>
+<main>
+  <form id="form" novalidate>
+    <p class="legenda"><span class="obrig">*</span> campo obrigatório</p>
+
+    <div class="campo">
+      <label for="qtd">Quantidade<span class="obrig" aria-hidden="true">*</span></label>
+      <input id="qtd" name="qtd" type="text" inputmode="numeric" autocomplete="off" maxlength="2"
+             required aria-required="true" aria-describedby="qtd-msg" placeholder="Ex.: 2">
+      <p class="msg" id="qtd-msg">Número inteiro de 1 a 20.</p>
+    </div>
+
+    <div class="campo">
+      <label for="obs">Observação</label>
+      <textarea id="obs" name="obs" maxlength="200" aria-describedby="obs-msg" placeholder="Opcional"></textarea>
+      <p class="msg" id="obs-msg">0/200</p>
+    </div>
+
+    <p class="sucesso" id="sucesso" role="status"></p>
+    <div class="acoes">
+      <button type="button" class="cancelar" id="cancelar">Cancelar</button>
+      <button type="submit" class="enviar">Enviar</button>
+    </div>
+  </form>
+</main>
+
+<script>
+const MAX = 20, CHAVE = "solicitacoes-agua";
+const form = document.getElementById("form");
+const qtd = document.getElementById("qtd"), obs = document.getElementById("obs");
+const qtdMsg = document.getElementById("qtd-msg"), obsMsg = document.getElementById("obs-msg");
+const sucesso = document.getElementById("sucesso");
+const DICA = "Número inteiro de 1 a 20.";
+
+// Só aceita dígitos: bloqueia "-", ".", ",", "e", "+" e colagem de texto inválido
+qtd.addEventListener("keydown", e => {
+  if (e.key.length === 1 && !/\d/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault();
+});
+qtd.addEventListener("input", () => {
+  qtd.value = qtd.value.replace(/\D/g, "").slice(0, 2);
+  sucesso.textContent = "";
+  if (qtd.getAttribute("aria-invalid") === "true") validarQtd();
+});
+qtd.addEventListener("blur", () => { if (qtd.value !== "") validarQtd(); });
+
+obs.addEventListener("input", () => { obsMsg.textContent = obs.value.length + "/200"; sucesso.textContent = ""; });
+
+function validarQtd(){
+  const v = qtd.value.trim();
+  let erro = "";
+  if (v === "") erro = "Informe a quantidade (campo obrigatório).";
+  else if (!/^\d+$/.test(v)) erro = "Use apenas números inteiros positivos.";
+  else if (Number(v) < 1) erro = "A quantidade deve ser maior que zero.";
+  else if (Number(v) > MAX) erro = "Máximo de " + MAX + " galões por solicitação.";
+  qtd.setAttribute("aria-invalid", erro ? "true" : "false");
+  qtdMsg.textContent = erro || DICA;
+  qtdMsg.classList.toggle("erro", !!erro);
+  return !erro;
+}
+
+function limpar(){
+  form.reset();
+  qtd.removeAttribute("aria-invalid");
+  qtdMsg.textContent = DICA; qtdMsg.classList.remove("erro");
+  obsMsg.textContent = "0/200";
+}
+
+document.getElementById("cancelar").addEventListener("click", () => { limpar(); sucesso.textContent = ""; });
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  if (!validarQtd()) { qtd.focus(); return; }
+  const n = Number(qtd.value);
+  // Grava no mesmo formato da tela de solicitações, para aparecerem lá como "novas"
+  let lista = [];
+  try { const s = JSON.parse(localStorage.getItem(CHAVE)); if (Array.isArray(s)) lista = s; } catch (_) {}
+  const hoje = new Date().toLocaleDateString("pt-BR");
+  lista.push({
+    id: lista.reduce((m, s) => Math.max(m, s.id), 0) + 1,
+    setor: "não informado",
+    qtd: n + (n === 1 ? " galão" : " galões"),
+    obs: obs.value.trim() || "nenhuma",
+    data: hoje,
+    status: "nova"
+  });
+  try { localStorage.setItem(CHAVE, JSON.stringify(lista)); } catch (_) {}
+  limpar();
+  sucesso.textContent = "Solicitação enviada com sucesso!";
+});
+</script>
+</body>
+</html>
