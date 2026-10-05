@@ -1,5 +1,5 @@
 // Senha definida para o sistema
-const SENHA_CORRETA = "123456";
+const SENHA_CORRETA = "adminadmin";
 
 
 const formulario = document.getElementById("loginForm");
@@ -64,7 +64,7 @@ formulario.addEventListener("submit", function (evento) {
             "Digite um email válido.";
 
         valido = false;
-    }
+    } 
 
 
     // ==========================
@@ -93,9 +93,9 @@ formulario.addEventListener("submit", function (evento) {
 
     if (valido) {
         if(email.value.trim() === "funcionario@gmail.com")
-            window.location.href = "funcionario.html"
-        else
-            window.location.href = "homeSolicitante.html";
+            window.location.href = "src/funcionario.html"
+        else if(email.value.trim() == "solicitante@gmail.com")
+            window.location.href = "src/homeSolicitante.html";
 
     }
 
