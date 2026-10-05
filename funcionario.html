@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solicitações de entrega</title>
+<style>
+:root{
+  --bg:#ebebeb; --surface:#fff; --text:#111; --muted:#555;
+  --tab:#d4d4d4; --tab-active:#b9a3a3; --btn:#2f74e0; --btn-text:#fff; --line:#cfcfcf;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#1c1c1e;--surface:#2a2a2d;--text:#f2f2f2;--muted:#b5b5b5;--tab:#3a3a3d;--tab-active:#7a5f5f;--line:#444}
+}
+:root[data-theme="dark"]{--bg:#1c1c1e;--surface:#2a2a2d;--text:#f2f2f2;--muted:#b5b5b5;--tab:#3a3a3d;--tab-active:#7a5f5f;--line:#444}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+header{background:var(--surface);box-shadow:0 2px 3px rgba(0,0,0,.25);padding:16px;display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+.tab{border:0;border-radius:999px;background:var(--tab);color:var(--text);font:inherit;font-size:1.35rem;padding:14px 32px;cursor:pointer;transition:background .2s}
+.tab[aria-selected="true"]{background:var(--tab-active)}
+.tab:focus-visible,.btn:focus-visible{outline:3px solid var(--btn);outline-offset:2px}
+.count{font-size:.85rem;margin-left:8px;opacity:.75}
+main{padding:20px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;max-width:1100px;margin:0 auto}
+.card{background:var(--surface);padding:22px 20px 14px;display:flex;flex-direction:column;gap:14px}
+.card h2{margin:0;font-size:1.35rem;font-weight:800;letter-spacing:.2px}
+.setor{font-size:1.3rem}
+.card p{margin:0;font-size:1.05rem;line-height:1.35}
+.data{margin-top:auto;padding-top:10px;font-size:1.05rem}
+.btn{border:1px solid #1d4fa0;background:var(--btn);color:var(--btn-text);border-radius:999px;font:inherit;font-size:1.05rem;padding:4px 12px;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.status{margin:0;text-align:center;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:1.05rem;color:var(--muted)}
+.vazio{grid-column:1/-1;text-align:center;color:var(--muted);padding:48px 0;font-size:1.1rem}
+</style>
+</head>
+<body>
+<header role="tablist" aria-label="Filtro de solicitações">
+  <button class="tab" role="tab" id="tab-novas" aria-selected="true" data-view="novas">Novas solicitações<span class="count" id="c-novas"></span></button>
+  <button class="tab" role="tab" id="tab-andamento" aria-selected="false" data-view="andamento">Em andamento<span class="count" id="c-andamento"></span></button>
+</header>
+<main><section class="grid" id="lista" role="tabpanel" aria-live="polite"></section></main>
+
+<script>
+const CHAVE = "solicitacoes-agua";
+const padrao = [
+  {id:25, setor:"setor A", qtd:"4 galões", obs:"nenhuma", data:"31/08/2026", status:"nova"},
+  {id:29, setor:"setor B", qtd:"1 galão", obs:"entregar no laboratório de informática", data:"08/09/2026", status:"nova"},
+  {id:35, setor:"setor C", qtd:"3 galões", obs:"entregar na sala 5", data:"17/09/2026", status:"nova"}
+];
+
+function carregar(){
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE));
+    if (Array.isArray(salvo)) return salvo;
+  } catch (e) {}
+  return structuredClone(padrao);
+}
+function salvar(){
+  try { localStorage.setItem(CHAVE, JSON.stringify(solicitacoes)); } catch (e) {}
+}
+
+const solicitacoes = carregar();
+let view = "novas";
+const lista = document.getElementById("lista");
+
+function card(s){
+  const el = document.createElement("article");
+  el.className = "card";
+  const h = document.createElement("h2"); h.textContent = "SOLICITAÇÃO #" + s.id;
+  const set = document.createElement("div"); set.className = "setor"; set.textContent = "Setor: " + s.setor;
+  const q = document.createElement("p"); q.textContent = "Quantidade: " + s.qtd;
+  const o = document.createElement("p"); o.textContent = "Observação: " + s.obs;
+  const d = document.createElement("div"); d.className = "data"; d.textContent = "data: " + s.data;
+  el.append(h, set, q, o, d);
+  if (s.status === "nova") {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = "iniciar entrega";
+    b.addEventListener("click", () => { s.status = "andamento"; salvar(); render(); });
+    el.append(b);
+  } else {
+    const st = document.createElement("p"); st.className = "status"; st.textContent = "entrega em andamento";
+    el.append(st);
+  }
+  return el;
+}
+
+function render(){
+  const alvo = view === "novas" ? "nova" : "andamento";
+  const itens = solicitacoes.filter(s => s.status === alvo);
+  lista.replaceChildren();
+  if (!itens.length) {
+    const v = document.createElement("p"); v.className = "vazio";
+    v.textContent = view === "novas" ? "Nenhuma nova solicitação." : "Nenhuma entrega em andamento. Inicie uma em Novas solicitações.";
+    lista.append(v);
+  } else itens.forEach(s => lista.append(card(s)));
+  document.getElementById("c-novas").textContent = "(" + solicitacoes.filter(s => s.status === "nova").length + ")";
+  document.getElementById("c-andamento").textContent = "(" + solicitacoes.filter(s => s.status === "andamento").length + ")";
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.view === view));
+}
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => { view = t.dataset.view; render(); }));
+render();
+</script>
+</body>
+</html>

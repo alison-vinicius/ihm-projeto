@@ -33,6 +33,7 @@ mostrarSenha.addEventListener("click", function () {
 
 // Ao clicar no botão Login
 formulario.addEventListener("submit", function (evento) {
+    console.log(email)
 
     // Impede o formulário de recarregar a página
     evento.preventDefault();
@@ -91,8 +92,10 @@ formulario.addEventListener("submit", function (evento) {
     // ==========================
 
     if (valido) {
-
-        window.location.href = "homeSolicitante.html";
+        if(email.value.trim() === "funcionario@gmail.com")
+            window.location.href = "funcionario.html"
+        else
+            window.location.href = "homeSolicitante.html";
 
     }
 
