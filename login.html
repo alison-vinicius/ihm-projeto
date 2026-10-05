@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login - SGG</title>
+
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+    <main class="login-container">
+
+        <h1>LOGIN - SGG</h1>
+
+        <form id="loginForm">
+
+            <!-- EMAIL -->
+            <div class="campo">
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Email"
+                >
+
+                <small id="emailErro"></small>
+            </div>
+
+
+            <!-- SENHA -->
+            <div class="campo senha-container">
+
+                <input
+                    type="password"
+                    id="senha"
+                    placeholder="Senha"
+                >
+
+                <button
+                    type="button"
+                    id="mostrarSenha"
+                    class="botao-olho"
+                >
+                    👁
+                </button>
+
+                <small id="senhaErro"></small>
+
+            </div>
+
+
+            <!-- LOGIN -->
+            <button
+                type="submit"
+                class="botao-login"
+            >
+                Login
+            </button>
+
+
+        </form>
+
+    </main>
+
+    <script src="login.js"></script>
+
+</body>
+</html>

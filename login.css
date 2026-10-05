@@ -1,0 +1,138 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background-color: white;
+
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.login-container {
+    width: 430px;
+    max-width: 90%;
+}
+
+h1 {
+    margin: 0 0 30px 0;
+
+    text-align: center;
+
+    color: #244286;
+
+    font-size: 42px;
+    font-weight: 400;
+}
+
+
+/* CAMPOS */
+
+.campo {
+    position: relative;
+
+    margin-bottom: 18px;
+}
+
+.campo input {
+    width: 100%;
+    height: 55px;
+
+    padding: 0 18px;
+
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+
+    outline: none;
+
+    font-size: 18px;
+}
+
+.campo input::placeholder {
+    color: #6f767d;
+}
+
+.campo input:focus {
+    border-color: #244286;
+}
+
+
+/* SENHA */
+
+.senha-container input {
+    padding-right: 55px;
+}
+
+.botao-olho {
+    position: absolute;
+
+    right: 12px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    border: none;
+    background: transparent;
+
+    cursor: pointer;
+
+    font-size: 18px;
+}
+
+
+/* ERROS */
+
+.campo small {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #c62828;
+
+    font-size: 13px;
+}
+
+
+/* BOTÃO LOGIN */
+
+.botao-login {
+    width: 100%;
+    height: 51px;
+
+    margin-top: 17px;
+
+    border: none;
+    border-radius: 14px;
+
+    background-color: #244286;
+
+    color: white;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.botao-login:hover {
+    background-color: #1c356f;
+}
+
+
+/* OBSERVAÇÃO */
+
+.observacao {
+    margin-top: 15px;
+
+    text-align: center;
+
+    color: #666;
+
+    font-size: 13px;
+}
