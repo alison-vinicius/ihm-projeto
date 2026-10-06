@@ -96,6 +96,8 @@ formulario.addEventListener("submit", function (evento) {
             window.location.href = "src/funcionario.html"
         else if(email.value.trim() == "solicitante@gmail.com")
             window.location.href = "src/solicitar-galao.html";
+        else if(email.value.trim() == "supervisor@gmail.com")
+            window.location.href = "src/galoes-entregues.html";
 
     }
 

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Galões entregues por período</title>
+<style>
+:root{
+  --bg:#fff; --text:#111; --muted:#555; --axis:#222; --bar:#c4c4c4; --bar-hover:#a8a8a8;
+  --field:#f0f0f0; --border:#555; --erro:#c62828; --foco:#2f74e0;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#1c1c1e;--text:#f2f2f2;--muted:#b5b5b5;--axis:#ddd;--bar:#6f7480;--bar-hover:#8b91a0;--field:#2a2a2d;--border:#8a8a8a;--erro:#ff7b72;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#1c1c1e;--text:#f2f2f2;--muted:#b5b5b5;--axis:#ddd;--bar:#6f7480;--bar-hover:#8b91a0;--field:#2a2a2d;--border:#8a8a8a;--erro:#ff7b72;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+main{max-width:860px;margin:0 auto;padding:28px 20px}
+h1{margin:0 0 6px;text-align:center;font-size:1.1rem;font-weight:500}
+.resumo{margin:0 0 10px;text-align:center;color:var(--muted);font-size:.95rem;min-height:1.3em}
+.grafico{width:100%}
+.grafico svg{display:block;width:100%;height:auto}
+.eixo{stroke:var(--axis);stroke-width:1.5;fill:none}
+.tick{stroke:var(--axis);stroke-width:1.5}
+.grade{stroke:var(--muted);stroke-opacity:.18}
+.txt{fill:var(--text);font-size:13px;font-family:inherit}
+.barra{fill:var(--bar);transition:fill .15s}
+.barra:hover{fill:var(--bar-hover)}
+.vazio{padding:70px 0;text-align:center;color:var(--erro)}
+.filtros{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-top:18px}
+.periodo{display:flex;flex-direction:column;gap:12px}
+.linha{display:flex;align-items:center;gap:12px}
+label{font-size:1.05rem;min-width:56px}
+input[type="month"],select{font:inherit;font-size:.95rem;color:var(--text);background:var(--field);border:1px solid var(--border);border-radius:8px;padding:7px 10px}
+select{min-width:140px}
+input:focus-visible,select:focus-visible{outline:3px solid var(--foco);outline-offset:2px}
+[aria-invalid="true"]{border-color:var(--erro);border-width:2px}
+@media (max-width:480px){.filtros{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Galões entregues por período</h1>
+  <p class="resumo" id="resumo" role="status"></p>
+  <div class="grafico" id="grafico"></div>
+
+  <section class="filtros" aria-label="Filtros">
+    <div class="periodo">
+      <div class="linha"><label for="inicio">Início:</label><input type="month" id="inicio" value="2026-07" min="2026-01" max="2026-12"></div>
+      <div class="linha"><label for="fim">Fim:</label><input type="month" id="fim" value="2026-09" min="2026-01" max="2026-12"></div>
+    </div>
+    <div class="linha">
+      <label for="setor">Setor:</label>
+      <select id="setor">
+        <option value="A">Setor A</option>
+        <option value="B">Setor B</option>
+        <option value="todos">Todos os setores</option>
+      </select>
+    </div>
+  </section>
+</main>
+
+<script>
+// Dados simulados: galões entregues por mês em 2026 (chave "AAAA-MM")
+const dados = {
+  A: {"2026-01":12,"2026-02":15,"2026-03":18,"2026-04":21,"2026-05":17,"2026-06":24,
+      "2026-07":22,"2026-08":38,"2026-09":31,"2026-10":27,"2026-11":29,"2026-12":20},
+  B: {"2026-01":8,"2026-02":11,"2026-03":14,"2026-04":12,"2026-05":16,"2026-06":13,
+      "2026-07":18,"2026-08":21,"2026-09":25,"2026-10":19,"2026-11":22,"2026-12":15}
+};
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const inicio = $("inicio"), fim = $("fim"), setor = $("setor"), grafico = $("grafico"), resumo = $("resumo");
+
+function mesesEntre(a, b){
+  const lista = []; let [y, m] = a.split("-").map(Number); const [y2, m2] = b.split("-").map(Number);
+  while (y < y2 || (y === y2 && m <= m2)) { lista.push(y + "-" + String(m).padStart(2, "0")); if (++m > 12) { m = 1; y++; } }
+  return lista;
+}
+function valor(chave, s){
+  if (s === "todos") return (dados.A[chave] || 0) + (dados.B[chave] || 0);
+  return dados[s][chave] || 0;
+}
+function rotulo(chave, abreviar){
+  const [y, m] = chave.split("-").map(Number);
+  const nome = MESES[m - 1];
+  return abreviar ? nome.slice(0, 3) : nome;
+}
+function el(tag, attrs, texto){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (texto !== undefined) e.textContent = texto;
+  return e;
+}
+
+function desenhar(){
+  const ini = inicio.value, f = fim.value;
+  const invalido = !ini || !f || ini > f;
+  inicio.setAttribute("aria-invalid", invalido);
+  fim.setAttribute("aria-invalid", invalido);
+  grafico.replaceChildren();
+  if (invalido) {
+    const p = document.createElement("p"); p.className = "vazio";
+    p.textContent = !ini || !f ? "Selecione o início e o fim do período." : "O início não pode ser depois do fim.";
+    grafico.append(p); resumo.textContent = ""; return;
+  }
+  const chaves = mesesEntre(ini, f);
+  const vals = chaves.map(c => valor(c, setor.value));
+  const maxVal = Math.max(...vals, 1);
+  const topo = Math.max(10, Math.ceil(maxVal / 10) * 10);
+  const total = vals.reduce((s, v) => s + v, 0);
+  const nomeSetor = setor.options[setor.selectedIndex].text;
+  resumo.textContent = nomeSetor + " · total no período: " + total + (total === 1 ? " galão" : " galões");
+
+  const W = 720, H = 320, esq = 48, dir = 20, sup = 24, inf = 36;
+  const largura = W - esq - dir, altura = H - sup - inf;
+  const svg = el("svg", {viewBox: "0 0 " + W + " " + H, role: "img",
+    "aria-label": "Gráfico de barras de galões entregues por mês, " + nomeSetor});
+
+  // grade e eixo Y
+  for (let v = 10; v <= topo; v += 10) {
+    const y = sup + altura - (v / topo) * altura;
+    svg.append(el("line", {x1: esq, x2: W - dir, y1: y, y2: y, class: "grade"}));
+    svg.append(el("line", {x1: esq - 6, x2: esq, y1: y, y2: y, class: "tick"}));
+    svg.append(el("text", {x: esq - 12, y: y + 4, "text-anchor": "end", class: "txt"}, v));
+  }
+  svg.append(el("path", {d: "M" + esq + " " + sup + "V" + (sup + altura) + "H" + (W - dir), class: "eixo"}));
+
+  // barras
+  const passo = largura / chaves.length;
+  const bw = Math.min(40, passo * 0.55);
+  const abreviar = chaves.length > 6;
+  chaves.forEach((c, i) => {
+    const cx = esq + passo * i + passo / 2;
+    const h = (vals[i] / topo) * altura;
+    const y = sup + altura - h;
+    const g = el("g", {});
+    g.append(el("title", {}, rotulo(c) + ": " + vals[i] + " galões"));
+    g.append(el("rect", {x: cx - bw / 2, y: y, width: bw, height: h, class: "barra"}));
+    g.append(el("text", {x: cx, y: y - 6, "text-anchor": "middle", class: "txt"}, vals[i]));
+    g.append(el("text", {x: cx, y: H - 12, "text-anchor": "middle", class: "txt"}, rotulo(c, abreviar)));
+    svg.append(g);
+  });
+  grafico.append(svg);
+}
+
+[inicio, fim, setor].forEach(c => c.addEventListener("change", desenhar));
+desenhar();
+</script>
+</body>
+</html>
