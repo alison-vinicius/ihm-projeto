@@ -1,5 +1,5 @@
 // Senha definida para o sistema
-const SENHA_CORRETA = "adminadmin";
+const SENHA_CORRETA = "adminadmin29@";
 
 
 const formulario = document.getElementById("loginForm");
